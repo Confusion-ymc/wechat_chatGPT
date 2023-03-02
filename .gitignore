@@ -1,0 +1,13 @@
+# macOS
+.DS_Store
+
+# Python
+__pycache__
+venv
+
+# IDEA
+.idea
+build
+dist
+
+config.py

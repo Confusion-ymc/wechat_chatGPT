@@ -1,0 +1,11 @@
+version: "3.0"
+services:
+  wechat_chatgpt:
+    build:
+      dockerfile: Dockerfile
+      context: .
+    image: wechat_chatgpt
+    restart: always
+    container_name: wechat_chatgpt
+    ports:
+      - "8000:8000"
