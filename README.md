@@ -30,7 +30,7 @@ pip3 install -r requirements.txt
 例如：
 
 ```
-TOKEN = "1232sad"  # 请填写你在微信公众平台设置的 Token
+TOKEN = "1232sa1d"  # 请填写你在微信公众平台设置的 Token
 EncodingAESKey = 'b1DRHn1B9ZU2K7lUO9DqkWLdi4jAzANnE69YPpc5'
 APP_ID = 'wx37b5de69340a4'
 chatGPT_KEY = "sk-Ol0g4yeT3BlbkFJpfXHBOv1dLLcXUArFLxK"
