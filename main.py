@@ -9,7 +9,7 @@ from wechatpy.replies import create_reply
 from wechatpy.utils import check_signature
 from wechatpy import parse_message
 
-import chat_gpt_api
+import chatgpt_api
 from config import TOKEN, EncodingAESKey, APP_ID
 
 app = FastAPI()
@@ -50,7 +50,8 @@ async def reply_wechat_message(request: Request):
         user_id, ask_message, create_time = msg.source, msg.content, str(msg.create_time.timestamp())
         reply_text = await message_control.get_reply(user_id, ask_message, create_time)
         if reply_text:
-            logger.info(f'user: {msg.content}\nchatGPT:{reply_text}')
+            logger.info(f'User Ask: {msg.content}')
+            logger.info(f'chatGPT Reply:{reply_text}')
         reply = create_reply(reply_text, msg)
     else:
         reply = create_reply('Sorry, can not handle this for now', msg)
