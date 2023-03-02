@@ -5,3 +5,4 @@ starlette==0.25.0
 wechatpy==1.8.18
 asyncio==3.4.3
 revChatGPT==3.0.2
+cryptography==39.0.1
