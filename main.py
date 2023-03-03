@@ -1,5 +1,3 @@
-import asyncio
-
 import uvicorn as uvicorn
 from fastapi import FastAPI, Request
 
@@ -57,6 +55,7 @@ async def reply_wechat_message(request: Request):
             conversation = conversation_manager.create_conversation(user_id, ask_message, create_time, conversation_id)
         if conversation.id != conversation_id:
             reply_text = '我正在处理上一条消息，请等我回复你以后重新发送。'
+            logger.info(f'跳过处理 {ask_message}')
         else:
             reply_text = await conversation.get_reply()
 
