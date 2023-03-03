@@ -24,7 +24,7 @@ async def verify_wechat_server(signature: str, echostr: str, timestamp: str, non
         return "Invalid request"
 
 
-message_control = chat_gpt_api.MessageControl()
+message_control = chatgpt_api.MessageControl()
 
 
 @app.post('/wechat')
@@ -46,6 +46,7 @@ async def reply_wechat_message(request: Request):
         # 处理异常或忽略
         return
     msg = parse_message(msg)
+    logger.info(f'收到消息：{msg.type}')
     if msg.type == 'text':
         user_id, ask_message, create_time = msg.source, msg.content, str(msg.create_time.timestamp())
         reply_text = await message_control.get_reply(user_id, ask_message, create_time)
@@ -54,7 +55,7 @@ async def reply_wechat_message(request: Request):
             logger.info(f'chatGPT Reply:{reply_text}')
         reply = create_reply(reply_text, msg)
     else:
-        reply = create_reply('Sorry, can not handle this for now', msg)
+        reply = create_reply('对不起，我现在只能处理文字消息', msg)
     return HTMLResponse(content=crypto.encrypt_message(
         reply.render(),
         nonce,

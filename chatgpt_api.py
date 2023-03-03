@@ -65,6 +65,7 @@ class MessageControl:
         reply_id = user_id + create_time
         conversation: Conversation = self.wait_conversation.get(reply_id)
         if not conversation:
+            logger.info('等待处理...')
             # 第一次请求
             # print('第 1 次请求')
             bot = self.bot_manager.get_bot(user_id)
@@ -73,20 +74,22 @@ class MessageControl:
             self.request_times[reply_id] = 0
             conversation.start_generate()
         else:
-            # print(f'第 {self.request_times[reply_id] + 1} 次请求')
-            if conversation.status == 'finish':
-                return self.return_and_clear(reply_id)
+            return '我正在处理上一条消息，请稍等。'
+
         self.request_times[reply_id] += 1  # 记录请求数
         if self.request_times[reply_id] <= 2:
-            logger.info('等待处理...')
-            # 超过5秒  微信服务器不会接受  变相实现不响应请求
-            await asyncio.sleep(6)
-            return None
-        for i in range(3):
+            wait_time = 6
+        else:
+            wait_time = 3
+        for i in range(wait_time):
             if conversation.status == 'finish':
                 return self.return_and_clear(reply_id)
             else:
                 await asyncio.sleep(1)
+            # 超过5秒  微信服务器不会接受  变相实现不响应请求
+        if wait_time == 6:
+            return None
+
         return self.return_and_clear(reply_id)
 
     def return_and_clear(self, reply_id):
