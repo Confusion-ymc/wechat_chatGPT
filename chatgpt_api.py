@@ -155,7 +155,7 @@ class ConversationManager:
 
     def get_conversation(self, user_id) -> Optional[Conversation]:
         conversation = self.user_map.get(user_id)
-        if conversation.already_send:
+        if conversation and conversation.already_send:
             del self.user_map[user_id]
             return None
         else:
