@@ -39,10 +39,11 @@ class BotManager:
 
 
 class Conversation:
-    def __init__(self, bot, ask_message):
+    def __init__(self, bot, user_id, ask_message):
         self.status = 'pending'
         self.ask_message = ask_message
         self.bot = bot
+        self.user_id = user_id
         self.reply = '抱歉，请求超时，请重试'
 
     def start_generate(self):
@@ -60,21 +61,25 @@ class MessageControl:
         self.bot_manager = BotManager()
         self.wait_conversation = {}
         self.request_times = {}
+        self.pending_user = []
 
     async def get_reply(self, user_id, ask_message, create_time):
         reply_id = user_id + create_time
         conversation: Conversation = self.wait_conversation.get(reply_id)
+        if user_id not in self.pending_user:
+            self.pending_user.append(user_id)
+        else:
+            return '我正在处理上一条消息，请等我回复你以重新发送。'
+
         if not conversation:
             logger.info('等待处理...')
             # 第一次请求
             # print('第 1 次请求')
             bot = self.bot_manager.get_bot(user_id)
-            conversation = Conversation(bot, ask_message)
+            conversation = Conversation(bot, user_id, ask_message)
             self.wait_conversation[reply_id] = conversation
             self.request_times[reply_id] = 0
             conversation.start_generate()
-        else:
-            return '我正在处理上一条消息，请稍等。'
 
         self.request_times[reply_id] += 1  # 记录请求数
         if self.request_times[reply_id] <= 2:
@@ -96,6 +101,8 @@ class MessageControl:
         # print('处理完成 返回消息')
         conversation = self.wait_conversation[reply_id]
         reply = conversation.reply
+        user_id = conversation.user_id
+        self.pending_user.remove(user_id)
         del self.wait_conversation[reply_id]
         del self.request_times[reply_id]
         return reply

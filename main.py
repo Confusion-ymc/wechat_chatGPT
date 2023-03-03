@@ -54,6 +54,8 @@ async def reply_wechat_message(request: Request):
             logger.info(f'User Ask: {msg.content}')
             logger.info(f'chatGPT Reply:{reply_text}')
         reply = create_reply(reply_text, msg)
+    elif msg.type == 'event' and msg.event == 'subscribe':
+        reply = create_reply('感谢你的关注，我将为你提供chatGPT的体验服务', msg)
     else:
         reply = create_reply('对不起，我现在只能处理文字消息', msg)
     return HTMLResponse(content=crypto.encrypt_message(
