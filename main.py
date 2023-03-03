@@ -46,8 +46,8 @@ async def reply_wechat_message(request: Request):
         # 处理异常或忽略
         return
     msg = parse_message(msg)
-    logger.info(f'收到消息：{msg.type}')
     if msg.type == 'text':
+        logger.info(f'收到消息：[{msg.type}] {msg.content}')
         user_id, ask_message, create_time = msg.source, msg.content, str(msg.create_time.timestamp())
         reply_text = await message_control.get_reply(user_id, ask_message, create_time)
         if reply_text:
