@@ -69,7 +69,7 @@ class MessageControl:
         if user_id not in self.pending_user:
             self.pending_user.append(user_id)
         else:
-            return '我正在处理上一条消息，请等我回复你以重新发送。'
+            return '我正在处理上一条消息，请等我回复你以后重新发送。'
 
         if not conversation:
             logger.info('等待处理...')
