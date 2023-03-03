@@ -1,3 +1,5 @@
+import asyncio
+
 import uvicorn as uvicorn
 from fastapi import FastAPI, Request
 
@@ -24,7 +26,7 @@ async def verify_wechat_server(signature: str, echostr: str, timestamp: str, non
         return "Invalid request"
 
 
-message_control = chatgpt_api.MessageControl()
+conversation_manager = chatgpt_api.ConversationManager()
 
 
 @app.post('/wechat')
@@ -49,10 +51,15 @@ async def reply_wechat_message(request: Request):
     if msg.type == 'text':
         logger.info(f'收到消息：[{msg.type}] {msg.content}')
         user_id, ask_message, create_time = msg.source, msg.content, str(msg.create_time.timestamp())
-        reply_text = await message_control.get_reply(user_id, ask_message, create_time)
-        if reply_text:
-            logger.info(f'User Ask: {msg.content}')
-            logger.info(f'chatGPT Reply:{reply_text}')
+        conversation_id = user_id + create_time
+        conversation = conversation_manager.get_conversation(user_id)
+        if not conversation:
+            conversation = conversation_manager.create_conversation(user_id, ask_message, create_time, conversation_id)
+        if conversation.id != conversation_id:
+            reply_text = '我正在处理上一条消息，请等我回复你以后重新发送。'
+        else:
+            reply_text = await conversation.get_reply()
+
         reply = create_reply(reply_text, msg)
     elif msg.type == 'event' and msg.event == 'subscribe':
         reply = create_reply('感谢你的关注，我将为你提供chatGPT的体验服务', msg)
