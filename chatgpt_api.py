@@ -161,13 +161,16 @@ class MessageControl:
 
     def return_and_clear(self, reply_id):
         # print('处理完成 返回消息')
-        conversation = self.wait_conversation[reply_id]
-        reply = conversation.reply
-        user_id = conversation.user_id
-        self.pending_user.remove(user_id)
-        del self.wait_conversation[reply_id]
-        del self.request_times[reply_id]
-        return reply
+        try:
+            conversation = self.wait_conversation[reply_id]
+            reply = conversation.reply
+            user_id = conversation.user_id
+            self.pending_user.remove(user_id)
+            del self.wait_conversation[reply_id]
+            del self.request_times[reply_id]
+            return reply
+        except Exception as e:
+            return '消息已处理'
 
 
 if __name__ == '__main__':
