@@ -166,6 +166,7 @@ class ConversationManager:
         conversation = Conversation(bot, user_id, create_time, ask_message, conversation_id)
         conversation.start()
         self.user_map[user_id] = conversation
+        return conversation
 
 
 # class MessageControl:
