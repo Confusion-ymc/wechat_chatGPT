@@ -66,12 +66,11 @@ class MessageControl:
     async def get_reply(self, user_id, ask_message, create_time):
         reply_id = user_id + create_time
         conversation: Conversation = self.wait_conversation.get(reply_id)
-        if user_id not in self.pending_user:
-            self.pending_user.append(user_id)
-        else:
-            return '我正在处理上一条消息，请等我回复你以后重新发送。'
-
         if not conversation:
+            if user_id in self.pending_user:
+                return '我正在处理上一条消息，请等我回复你以后重新发送。'
+
+            self.pending_user.append(user_id)
             logger.info('等待处理...')
             # 第一次请求
             # print('第 1 次请求')
