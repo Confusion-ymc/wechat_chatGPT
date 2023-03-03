@@ -122,14 +122,14 @@ def ask_task(conversation: Conversation):
 class MessageControl:
     def __init__(self):
         self.bot_manager = BotManager()
-        self.wait_conversation = {}
-        self.request_times = {}
+        self.pending_conversation = {}
         self.pending_user = []
+        self.request_times = {}
 
     async def get_reply(self, user_id, ask_message, create_time):
         reply_id = user_id + create_time
-        conversation: Conversation = self.wait_conversation.get(reply_id)
-        if not conversation:
+        conversation: Conversation = self.pending_conversation.get(reply_id)
+        if not conversation:  # 有不同的消息进来
             if user_id in self.pending_user:
                 return '我正在处理上一条消息，请等我回复你以后重新发送。'
 
@@ -139,7 +139,7 @@ class MessageControl:
             # print('第 1 次请求')
             bot = self.bot_manager.get_bot(user_id)
             conversation = Conversation(bot, user_id, ask_message)
-            self.wait_conversation[reply_id] = conversation
+            self.pending_conversation[reply_id] = conversation
             self.request_times[reply_id] = 0
             conversation.start_generate()
 
@@ -162,14 +162,15 @@ class MessageControl:
     def return_and_clear(self, reply_id):
         # print('处理完成 返回消息')
         try:
-            conversation = self.wait_conversation[reply_id]
+            conversation = self.pending_conversation[reply_id]
             reply = conversation.reply
             user_id = conversation.user_id
             self.pending_user.remove(user_id)
-            del self.wait_conversation[reply_id]
+            del self.pending_conversation[reply_id]
             del self.request_times[reply_id]
             return reply
         except Exception as e:
+            logger.warning('消息已处理')
             return '消息已处理'
 
 
