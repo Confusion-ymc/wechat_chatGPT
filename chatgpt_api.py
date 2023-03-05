@@ -130,8 +130,9 @@ class Conversation(threading.Thread):
             # 必须返回
             if must_return and i >= 4:
                 self.status = 'finish'
+                logger.info('第三次请求必须返回')
             # 最多等待4秒， 不然就微信接口超时后返回
-            if self.status == 'finish' and i < 4:
+            if self.status == 'finish' and i <= 4:
                 reply = self.reply
                 self.already_send = True
                 logger.info(f'User Ask: {self.ask_message}')
