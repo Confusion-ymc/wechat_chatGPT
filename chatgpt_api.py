@@ -197,17 +197,20 @@ class User:
 
         wait_time = 0
         while True:
-            if wait_time >= (4 if msg_request_times == 3 else 10):
-                if self.msg_request_times[msg_id] == 3:
-                    self.msg_request_times[msg_id] = 0
-                    self.task.failed_send = True
-                    return '处理时间过长，发送【重试】尝试重新获取回复'
-            if self.task.process_finish:
+            if wait_time >= 4 and msg_request_times == 3:
+                self.msg_request_times[msg_id] = 0
+                self.task.failed_send = True
+                logger.info(f'处理时间过长 {ask_message}')
+                return '处理时间过长，发送【重试】尝试重新获取回复'
+            if self.task.process_finish or wait_time >= 10:
                 reply = self.task.reply
                 if wait_time <= 4:
+                    # 成功处理
                     logger.info(f'【清理任务】{ask_message}')
                     del self.msg_request_times[msg_id]
                     self.task = None
+                else:
+                    logger.info(f'【处理超时，不响应】{ask_message}')
                 return reply
             else:
                 await asyncio.sleep(1)
