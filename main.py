@@ -54,12 +54,12 @@ async def reply_wechat_message(request: Request):
         if not conversation:
             logger.info('没有对话')
             conversation = conversation_manager.create_conversation(user_id, ask_message, create_time, conversation_id)
-        # else:
-        #     if ask_message == '重试' and conversation:
-        #         conversation_id = conversation.id
+        else:
+            if ask_message == '重试' and conversation:
+                conversation_id = conversation.id
 
         if conversation.id != conversation_id:
-            reply_text = '我正在处理上一条消息，请等我回复你以后重新发送'# 。\n如果长时间未返回消息请发送【重试】尝试获取回复'
+            reply_text = '我正在处理上一条消息，请等我回复你以后重新发送。\n如果长时间未返回消息请发送【重试】尝试获取回复'
             logger.info(f'跳过处理 {ask_message}')
         else:
             reply_text = await conversation.get_reply()

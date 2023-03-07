@@ -105,12 +105,11 @@ class Conversation(threading.Thread):
     def __init__(self, bot, user_id, create_time, ask_message, conversation_id):
         super(Conversation, self).__init__()
         self.daemon = True
-        self.status = 'pending'
         self.ask_message = ask_message
         self.create_time = create_time
         self.bot = bot
         self.user_id = user_id
-        self.reply = '抱歉，处理时间过长,请重试'
+        self.reply = ''
         self.id = conversation_id
         self.get_reply_times = 0
         self.already_send = False
@@ -125,30 +124,52 @@ class Conversation(threading.Thread):
             self.reply = '抱歉，chatGPT繁忙，请尝试重新发送你的问题'
             logger.error(f'请求API失败 {self.ask_message} :: {e}')
         self.process_finish = True
-        self.status = 'finish'
 
     async def get_reply(self):
-        must_return = False
-        wait_time = 4
         self.get_reply_times += 1
         if self.get_reply_times == 3:
             # 微信服务器第三次请求 必须返回
-            must_return = True
-        for i in range(10):
-            # 必须返回
-            if must_return and i >= wait_time:
-                self.status = 'finish'
-                logger.info('第三次请求必须返回')
-            # 最多等待4秒， 不然就微信接口超时后返回
-            if self.status == 'finish' and i <= wait_time:
-                reply = self.reply
-                # todo
+            for i in range(3):
+                if self.process_finish:
+                    self.already_send = True
+                    logger.info(f'User Ask: {self.ask_message}')
+                    logger.info(f'chatGPT Reply:{self.reply}')
+                    break
+                await asyncio.sleep(1)
+            self.get_reply_times = 0
+            return '抱歉，处理时间过长,请发送【重试】尝试获取回复'
+        else:
+            wait_time = 0
+            while not self.process_finish:
+                if wait_time >= 10:
+                    logger.info('超过4秒，不响应请求')
+                    break
+                await asyncio.sleep(1)
+                wait_time += 1
+            if wait_time <= 4:
+                self.already_send = True
                 logger.info(f'User Ask: {self.ask_message}')
                 logger.info(f'chatGPT Reply:{self.reply}')
-                return reply
-            await asyncio.sleep(1)
-        logger.info('超过4秒，不响应请求')
-        return self.reply
+            reply = self.reply
+            return reply
+
+        #
+        #     must_return = True
+        # for i in range(10):
+        #     # 必须返回
+        #     if must_return and i >= wait_time:
+        #         self.status = 'finish'
+        #         logger.info('第三次请求必须返回')
+        #     # 最多等待4秒， 不然就微信接口超时后返回
+        #     if self.status == 'finish' and i <= wait_time:
+        #         reply = self.reply
+        #         # todo
+        #         logger.info(f'User Ask: {self.ask_message}')
+        #         logger.info(f'chatGPT Reply:{self.reply}')
+        #         return reply
+        #     await asyncio.sleep(1)
+        # logger.info('超过4秒，不响应请求')
+        # return self.reply
 
 
 class ConversationManager:
