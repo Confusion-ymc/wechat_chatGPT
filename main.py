@@ -1,3 +1,5 @@
+from typing import Dict
+
 import uvicorn as uvicorn
 from fastapi import FastAPI, Request
 
@@ -13,8 +15,10 @@ import chatgpt_api
 from config import TOKEN, EncodingAESKey, APP_ID
 
 app = FastAPI()
-user_map = {}
+user_map: Dict[str, chatgpt_api.User] = {}
 bot_manager = chatgpt_api.BotManager()
+timeout_reply = chatgpt_api.TimeoutReply()
+timeout_reply.start()
 
 
 @app.get("/wechat")
@@ -26,7 +30,15 @@ async def verify_wechat_server(signature: str, echostr: str, timestamp: str, non
         return "Invalid request"
 
 
-# conversation_manager = chatgpt_api.ConversationManager()
+@app.get("/reply")
+async def get_timeout_reply(msg_id):
+    ask_message, reply = timeout_reply.get_reply(msg_id)
+    if ask_message is None:
+        return HTMLResponse(
+            content=f'<html><head><title>Hello橙同学</title></head><pre>没有找到数据 或 已过期</pre></html>')
+    return HTMLResponse(
+        content=f'<html><head><title>Hello橙同学</title></head><pre>你:\n{ask_message}\nchatGPT:\n{reply}</pre></html>')
+
 
 @app.post('/wechat')
 async def reply_wechat_message(request: Request):
@@ -53,33 +65,9 @@ async def reply_wechat_message(request: Request):
         conversation_id = user_id + create_time
         user = user_map.get(user_id)
         if not user:
-            user = chatgpt_api.User(user_id, bot_manager)
+            user = chatgpt_api.User(user_id, bot_manager, timeout_reply)
+            user_map[user_id] = user
         reply_text = await user.get_reply(ask_message, conversation_id)
-
-        #
-        #
-        # conversation = conversation_manager.get_conversation(user_id)
-        # if not conversation:
-        #     logger.info('没有对话')
-        #     if ask_message == '重试':
-        #         reply = create_reply('没有需要重试回复的内容，请重新发送消息', msg)
-        #         return HTMLResponse(content=crypto.encrypt_message(
-        #             reply.render(),
-        #             nonce,
-        #             timestamp
-        #         ))
-        #     else:
-        #         conversation = conversation_manager.create_conversation(user_id, ask_message, create_time,
-        #                                                                 conversation_id)
-        # else:
-        #     if ask_message == '重试' and conversation:
-        #         conversation_id = conversation.id
-        #
-        # if conversation.id != conversation_id:
-        #     reply_text = '我正在处理上一条消息，请等我回复你以后重新发送。\n如果长时间未返回消息请发送【重试】尝试获取回复'
-        #     logger.info(f'跳过处理 {ask_message}')
-        # else:
-        #     reply_text = await conversation.get_reply()
 
         reply = create_reply(reply_text, msg)
     elif msg.type == 'event' and msg.event == 'subscribe':
