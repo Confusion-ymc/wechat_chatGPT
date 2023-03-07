@@ -66,7 +66,13 @@ class MyBot(Chatbot):
                 content = delta["content"]
                 full_response += content
                 yield content
-        self.conversation.append({"role": response_role, "content": full_response})
+        self.__add_to_conversation(full_response, response_role)
+
+    def __add_to_conversation(self, message: str, role: str):
+        """
+        Add a message to the conversation
+        """
+        self.conversation.append({"role": role, "content": message})
 
 
 class BotManager:
