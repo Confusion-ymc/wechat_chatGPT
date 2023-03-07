@@ -127,7 +127,7 @@ class Conversation(threading.Thread):
 
     async def get_reply(self):
         must_return = False
-        wait_time = 5
+        wait_time = 4
         self.get_reply_times += 1
         if self.get_reply_times == 3:
             # 微信服务器第三次请求 必须返回
@@ -157,6 +157,7 @@ class ConversationManager:
     def get_conversation(self, user_id) -> Optional[Conversation]:
         conversation = self.user_map.get(user_id)
         if conversation and conversation.already_send:
+            logger.warning('删除对话')
             del self.user_map[user_id]
             return None
         else:

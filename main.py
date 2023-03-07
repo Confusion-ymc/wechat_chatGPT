@@ -52,6 +52,7 @@ async def reply_wechat_message(request: Request):
         conversation_id = user_id + create_time
         conversation = conversation_manager.get_conversation(user_id)
         if not conversation:
+            logger.info('没有对话')
             conversation = conversation_manager.create_conversation(user_id, ask_message, create_time, conversation_id)
         else:
             if ask_message == '重试' and conversation:
