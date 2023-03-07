@@ -66,13 +66,7 @@ class MyBot(Chatbot):
                 content = delta["content"]
                 full_response += content
                 yield content
-        self.__add_to_conversation(full_response, response_role)
-
-    def __add_to_conversation(self, message: str, role: str):
-        """
-        Add a message to the conversation
-        """
-        self.conversation.append({"role": role, "content": message})
+        self.conversation.append({"role": response_role, "content": full_response})
 
 
 class BotManager:
@@ -116,8 +110,12 @@ class Conversation(threading.Thread):
         self.already_send = False
 
     def run(self) -> None:
-        reply = self.bot.ask(self.ask_message)
-        self.reply = reply
+        try:
+            reply = self.bot.ask(self.ask_message)
+            logger.info(f'task finish {self.ask_message} :: {reply}')
+            self.reply = reply
+        except Exception as e:
+            logger.error(f'请求API失败 {self.ask_message} :: {e}')
         self.status = 'finish'
 
     async def get_reply(self):
