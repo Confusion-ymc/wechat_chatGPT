@@ -126,17 +126,18 @@ class Conversation(threading.Thread):
 
     async def get_reply(self):
         must_return = False
+        wait_time = 5
         self.get_reply_times += 1
         if self.get_reply_times == 3:
             # 微信服务器第三次请求 必须返回
             must_return = True
         for i in range(10):
             # 必须返回
-            if must_return and i >= 4:
+            if must_return and i >= wait_time:
                 self.status = 'finish'
                 logger.info('第三次请求必须返回')
             # 最多等待4秒， 不然就微信接口超时后返回
-            if self.status == 'finish' and i <= 4:
+            if self.status == 'finish' and i <= wait_time:
                 reply = self.reply
                 self.already_send = True
                 logger.info(f'User Ask: {self.ask_message}')
