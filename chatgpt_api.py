@@ -110,10 +110,11 @@ class Conversation(threading.Thread):
         self.create_time = create_time
         self.bot = bot
         self.user_id = user_id
-        self.reply = '抱歉，处理时间过长，请发送【重试】尝试获取上一条回复'
+        self.reply = '抱歉，处理时间过长,请重试'
         self.id = conversation_id
         self.get_reply_times = 0
         self.already_send = False
+        self.process_finish = False
 
     def run(self) -> None:
         try:
@@ -123,6 +124,7 @@ class Conversation(threading.Thread):
         except Exception as e:
             self.reply = '抱歉，chatGPT繁忙，请尝试重新发送你的问题'
             logger.error(f'请求API失败 {self.ask_message} :: {e}')
+        self.process_finish = True
         self.status = 'finish'
 
     async def get_reply(self):
@@ -140,7 +142,7 @@ class Conversation(threading.Thread):
             # 最多等待4秒， 不然就微信接口超时后返回
             if self.status == 'finish' and i <= wait_time:
                 reply = self.reply
-                self.already_send = True
+                # todo
                 logger.info(f'User Ask: {self.ask_message}')
                 logger.info(f'chatGPT Reply:{self.reply}')
                 return reply
