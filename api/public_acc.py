@@ -29,7 +29,7 @@ async def verify_wechat_server(signature: str, echostr: str, timestamp: str, non
 
 
 @router.get("/reply")
-async def get_timeout_reply(msg_id, timeout_reply: chatgpt_api.TimeoutReply = Depends(get_timeout_reply)):
+async def get_pending_reply(msg_id, timeout_reply: chatgpt_api.TimeoutReply = Depends(get_timeout_reply)):
     ask_message, reply = timeout_reply.get_reply(msg_id)
     if ask_message is None:
         return HTMLResponse(
