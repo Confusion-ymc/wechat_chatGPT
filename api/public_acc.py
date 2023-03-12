@@ -41,20 +41,26 @@ async def get_timeout_reply(msg_id, timeout_reply: chatgpt_api.TimeoutReply = De
 @router.post('/wechat')
 async def reply_wechat_message(
         request: Request,
+        signature: str,
+        timestamp: str,
+        nonce: str,
+        openid: str,
+        encrypt_type: str,
+        msg_signature: str,
         timeout_reply: chatgpt_api.TimeoutReply = Depends(get_timeout_reply),
         user_map: dict = Depends(get_user_map),
         bot_manager: chatgpt_api.BotManager = Depends(get_bot_manager)
 ):
     data = await request.body()
     xml_data = data.decode("utf-8")
-    nonce = request.query_params.get('nonce')
-    timestamp = request.query_params.get('timestamp')
+    # nonce = request.query_params.get('nonce')
+    # timestamp = request.query_params.get('timestamp')
     crypto = WeChatCrypto(TOKEN, EncodingAESKey, APP_ID)
 
     try:
         msg = crypto.decrypt_message(
             xml_data,
-            request.query_params.get('msg_signature'),
+            msg_signature,  # request.query_params.get('msg_signature'),
             timestamp,
             nonce
         )
