@@ -108,7 +108,7 @@ class Conversation(threading.Thread):
         super(Conversation, self).__init__()
         self.daemon = True
         self.ask_message = ask_message
-        self.bot = bot
+        self.bot: MyBot = bot
         self.user_id = user_id
         self.reply = ''
         self.id = conversation_id
@@ -130,6 +130,7 @@ class Conversation(threading.Thread):
 class TimeoutReply(threading.Thread):
     def __init__(self):
         super().__init__()
+        self.daemon = True
         self.reply_task: Dict[str, Conversation] = {}
         self.add_time = {}
 
@@ -211,12 +212,12 @@ class User:
                 await asyncio.sleep(1)
             wait_time += 1
 
-    def create_task(self, ask_message, msg_id):
+    def create_task(self, ask_message, msg_id) -> Conversation:
         bot = self.bot_manager.get_bot(self.id)
         conversation = Conversation(bot, self.id, ask_message, msg_id)
         conversation.start()
         self.task = conversation
-        return True
+        return self.task
 
 
 if __name__ == '__main__':
