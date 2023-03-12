@@ -6,3 +6,5 @@ wechatpy==1.8.18
 asyncio==3.4.3
 revChatGPT==3.0.2
 cryptography==39.0.1
+aiohttp==3.8.4
+requests==2.28.2
