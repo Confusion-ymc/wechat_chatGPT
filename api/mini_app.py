@@ -1,15 +1,10 @@
 import asyncio
 import time
 
-from fastapi import Request, APIRouter, Depends, Body, Query
+from fastapi import Request, APIRouter, Depends
 import chatgpt_api
 
 from loguru import logger
-from starlette.responses import HTMLResponse
-from wechatpy.exceptions import InvalidSignatureException
-from wechatpy.utils import check_signature
-
-from config import TOKEN, EncodingAESKey, APP_ID
 from depends import AppState
 from tools.wx_helper import wx_tools
 
@@ -18,25 +13,6 @@ router = APIRouter(prefix='/app')
 get_timeout_reply = AppState('timeout_reply')
 get_user_map = AppState('user_map')
 get_bot_manager = AppState('bot_manager')
-
-
-@router.get("/wechat")
-async def verify_wechat_server2(signature: str, echostr: str, timestamp: str, nonce: str):
-    try:
-        check_signature(TOKEN, signature, timestamp, nonce)
-        return HTMLResponse(content=echostr)
-    except InvalidSignatureException:
-        return "Invalid request"
-
-
-@router.get("/reply")
-async def get_timeout_reply2(msg_id, timeout_reply: chatgpt_api.TimeoutReply = Depends(get_timeout_reply)):
-    ask_message, reply = timeout_reply.get_reply(msg_id)
-    if ask_message is None:
-        return HTMLResponse(
-            content=f'<html><head><title>Hello橙同学</title></head><pre>没有找到数据 或 已过期</pre></html>')
-    return HTMLResponse(
-        content=f'<html><head><title>Hello橙同学</title></head><pre>你:\n{ask_message}\nchatGPT:\n{reply}</pre></html>')
 
 
 @router.post('/ask')
@@ -63,7 +39,7 @@ async def ask_chatgpt(
 
 
 @router.post('/login')
-async def ask_chatgpt(request: Request):
+async def app_login(request: Request):
     data = await request.json()
     code = data.get('code')
     open_id = await wx_tools.get_we_user_opendid(code)
