@@ -25,7 +25,8 @@ async def ask_chatgpt(
     data = await request.json()
     user_id = data.get('user_id')
     ask_message = data.get('ask_message')
-    logger.info(f'收到消息：[{ask_message}]')
+    logger.info(f'收到消息：[{user_id}] [{ask_message}]')
+    assert user_id and ask_message
     create_time = str(time.time())
     conversation_id = user_id + create_time
     user = user_map.get(user_id)
