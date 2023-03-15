@@ -91,4 +91,5 @@ async def websocket_endpoint(user_id: str, websocket: WebSocket):
                 reply_message += send_data['data']
             logger.info(f'[回复完毕] [{ask_message}] [{reply_message}]')
     except WebSocketDisconnect:
-        pass
+        logger.info(f'WS断开连接 [{user_id}]')
+
