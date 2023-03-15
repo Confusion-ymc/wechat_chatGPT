@@ -51,17 +51,16 @@ async def app_login(request: Request):
 
 
 def stream_reply(reply_queue, bot, ask_message):
-    logger.info(f'[线程启动]  {ask_message}')
+    logger.info(f'[线程启动] {ask_message}')
     error = ''
     try:
         for item in bot.ask_stream(ask_message):
             reply_queue.put_nowait({'data': item, 'finish': False})
-        reply_queue.put_nowait({'data': {}, 'finish': True})
     except Exception as e:
         error = str(e)
-        reply_queue.put_nowait({'data': '抱歉，请求超时，请重新尝试', 'finish': False})
-        reply_queue.put_nowait({'data': {}, 'finish': True})
-    logger.error(f'[线程退出] {ask_message} {error}')
+        reply_queue.put_nowait({'data': '[抱歉，连接超时，请重新尝试]', 'finish': False})
+    reply_queue.put_nowait({'data': {}, 'finish': True})
+    logger.info(f'[线程退出] {ask_message} {error}')
 
 
 @router.websocket('/ws/{user_id}/')
@@ -71,6 +70,7 @@ async def websocket_endpoint(user_id: str, websocket: WebSocket):
     user_map = websocket.app.state.user_map
     timeout_reply = websocket.app.state.timeout_reply
     bot_manager = websocket.app.state.bot_manager
+    logger.info(f'WS连接成功 [{user_id}]')
     user = user_map.get(user_id)
     if not user:
         user = chatgpt_api.User(user_id, bot_manager, timeout_reply)
@@ -89,7 +89,6 @@ async def websocket_endpoint(user_id: str, websocket: WebSocket):
                 if send_data['finish']:
                     break
                 reply_message += send_data['data']
-            logger.info(f'[回复完毕]')
-            logger.info(f'[{ask_message}] [{reply_message}]')
+            logger.info(f'[回复完毕] [{ask_message}] [{reply_message}]')
     except WebSocketDisconnect:
         pass
