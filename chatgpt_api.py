@@ -162,7 +162,7 @@ class TimeoutReply(threading.Thread):
 
 
 class User:
-    def __init__(self, user_id, bot_manager, timeout_reply: TimeoutReply):
+    def __init__(self, user_id, bot_manager: BotManager, timeout_reply: TimeoutReply):
         self.bot_manager = bot_manager
         self.timeout_reply = timeout_reply
         self.id = user_id
@@ -218,6 +218,9 @@ class User:
         conversation.start()
         self.task = conversation
         return self.task
+
+    def get_bot(self) -> MyBot:
+        return self.bot_manager.get_bot(self.id)
 
 
 if __name__ == '__main__':

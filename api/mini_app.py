@@ -2,6 +2,8 @@ import asyncio
 import time
 
 from fastapi import Request, APIRouter, Depends
+from starlette.websockets import WebSocket, WebSocketDisconnect
+
 import chatgpt_api
 
 from loguru import logger
@@ -45,3 +47,27 @@ async def app_login(request: Request):
     code = data.get('code')
     open_id = await wx_tools.get_we_user_opendid(code)
     return {'data': open_id}
+
+
+@router.websocket('/ws/{user_id}/')
+async def websocket_endpoint(user_id: str, websocket: WebSocket):
+    await websocket.accept()
+    assert user_id
+    user_map = websocket.app.state.user_map
+    timeout_reply = websocket.app.state.timeout_reply
+    bot_manager = websocket.app.state.bot_manager
+    user = user_map.get(user_id)
+    if not user:
+        user = chatgpt_api.User(user_id, bot_manager, timeout_reply)
+        user_map[user_id] = user
+    bot = user.get_bot()
+    try:
+        while True:
+            ask_message = await websocket.receive_text()
+            logger.info(f'[ask]  {ask_message}')
+            for item in bot.ask_stream(ask_message):
+                await websocket.send_json({'data': item, 'finish': False})
+            await websocket.send_json({'data': {}, 'finish': True})
+            logger.info(f'[回复完毕]  {ask_message}')
+    except WebSocketDisconnect:
+        pass
