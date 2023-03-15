@@ -1,4 +1,5 @@
 import asyncio
+import threading
 import time
 
 from fastapi import Request, APIRouter, Depends
@@ -49,6 +50,20 @@ async def app_login(request: Request):
     return {'data': open_id}
 
 
+def stream_reply(reply_queue, bot, ask_message):
+    logger.info(f'[线程启动]  {ask_message}')
+    error = ''
+    try:
+        for item in bot.ask_stream(ask_message):
+            reply_queue.put_nowait({'data': item, 'finish': False})
+        reply_queue.put_nowait({'data': {}, 'finish': True})
+    except Exception as e:
+        error = str(e)
+        reply_queue.put_nowait({'data': '抱歉，请求超时，请重新尝试', 'finish': False})
+        reply_queue.put_nowait({'data': {}, 'finish': True})
+    logger.error(f'[线程退出] {ask_message} {error}')
+
+
 @router.websocket('/ws/{user_id}/')
 async def websocket_endpoint(user_id: str, websocket: WebSocket):
     await websocket.accept()
@@ -64,10 +79,17 @@ async def websocket_endpoint(user_id: str, websocket: WebSocket):
     try:
         while True:
             ask_message = await websocket.receive_text()
-            logger.info(f'[ask]  {ask_message}')
-            for item in bot.ask_stream(ask_message):
-                await websocket.send_json({'data': item, 'finish': False})
-            await websocket.send_json({'data': {}, 'finish': True})
-            logger.info(f'[回复完毕]  {ask_message}')
+            reply_message = ''
+            reply_queue = asyncio.Queue()
+            t = threading.Thread(target=stream_reply, args=(reply_queue, bot, ask_message), daemon=True)
+            t.start()
+            while True:
+                send_data = await reply_queue.get()
+                await websocket.send_json(send_data)
+                if send_data['finish']:
+                    break
+                reply_message += send_data['data']
+            logger.info(f'[回复完毕]')
+            logger.info(f'[{ask_message}] [{reply_message}]')
     except WebSocketDisconnect:
         pass
