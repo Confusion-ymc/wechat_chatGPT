@@ -107,7 +107,7 @@ class WsUser:
         except Exception as e:
             logger.error(f'[发送失败] {e}')
             if len(backup):
-                logger.warning(f"[回滚所有消息] [{self.ask_message}] [{''.join(backup)}]")
+                logger.warning(f"[回滚所有消息] [{self.ask_message}] [{''.join([item['data'] for item in backup])}]")
                 for i in range(len(backup)):
                     self.reply_queue.insert(0, backup[-(1 + i)])
             raise e
