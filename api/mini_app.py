@@ -11,11 +11,13 @@ from loguru import logger
 from depends import AppState
 from tools.wx_helper import wx_tools
 
-router = APIRouter(prefix='/app')
+router = APIRouter(prefix='/app', tags=['小程序接口'])
 
 get_timeout_reply = AppState('timeout_reply')
 get_user_map = AppState('user_map')
 get_bot_manager = AppState('bot_manager')
+
+ws_user_manager = {}
 
 
 @router.post('/ask')
@@ -25,6 +27,14 @@ async def ask_chatgpt(
         user_map: dict = Depends(get_user_map),
         bot_manager: chatgpt_api.BotManager = Depends(get_bot_manager)
 ):
+    """
+    接口请求
+    :param request:
+    :param timeout_reply:
+    :param user_map:
+    :param bot_manager:
+    :return:
+    """
     data = await request.json()
     user_id = data.get('user_id')
     ask_message = data.get('ask_message')
@@ -44,6 +54,11 @@ async def ask_chatgpt(
 
 @router.post('/login')
 async def app_login(request: Request):
+    """
+    登录换取code
+    :param request:
+    :return:
+    """
     data = await request.json()
     code = data.get('code')
     open_id = await wx_tools.get_we_user_opendid(code)
@@ -59,7 +74,7 @@ class WsUser:
 
     def ask(self, bot, ask_message):
         if self.pending or self.reply_queue:
-            logger.info('已存在运行中的任务')
+            logger.info('已存在运行中的任务, 不创建任务')
             return False
         else:
             self.ask_message = ask_message
@@ -90,14 +105,16 @@ class WsUser:
             logger.info(f'全部消息成功发送 [{self.user_id}] [{self.ask_message}] [{reply_message}]')
 
         except Exception as e:
-            logger.error('发送失败，回滚所有消息')
-            for i in range(len(backup)):
-                self.reply_queue.insert(0, backup[-(1 + i)])
+            logger.error(f'[发送失败] {e}')
+            if len(backup):
+                logger.warning(f"[回滚所有消息] [{self.ask_message}] [{''.join(backup)}]")
+                for i in range(len(backup)):
+                    self.reply_queue.insert(0, backup[-(1 + i)])
             raise e
 
     def stream_reply(self, bot, ask_message):
         self.pending = True
-        logger.info(f'[线程启动] {ask_message}')
+        logger.info(f'[线程启动] [{self.user_id}] {ask_message}')
         error = ''
         try:
             for item in bot.ask_stream(ask_message):
@@ -106,11 +123,8 @@ class WsUser:
             error = str(e)
             self.reply_queue.append({'data': '[抱歉，连接超时，请重新尝试]', 'finish': False})
         self.reply_queue.append({'data': '', 'finish': True})
-        logger.info(f'[线程退出] {ask_message} {error}')
+        logger.warning(f'[线程退出] [{self.user_id}] {ask_message} {error}')
         self.pending = False
-
-
-ws_user_manager = {}
 
 
 @router.websocket('/ws/{user_id}/')
@@ -118,7 +132,7 @@ async def websocket_endpoint(user_id: str, websocket: WebSocket):
     await websocket.accept()
     assert user_id
     bot_manager = websocket.app.state.bot_manager
-    logger.info(f'WS连接成功 [{user_id}]')
+    logger.info(f'[WS连接成功] [{user_id}]')
     user = ws_user_manager.get(user_id)
     if not user:
         user = WsUser(user_id)
@@ -133,4 +147,4 @@ async def websocket_endpoint(user_id: str, websocket: WebSocket):
                 await websocket.send_json({'data': '', 'finish': True})
             await user.send_reply(websocket)
     except WebSocketDisconnect:
-        logger.info(f'WS断开连接 [{user_id}]')
+        logger.warning(f'[WS断开连接] [{user_id}]')

@@ -9,10 +9,10 @@ from wechatpy.replies import create_reply
 from wechatpy.utils import check_signature
 from wechatpy import parse_message
 
-from config import TOKEN, EncodingAESKey, APP_ID
+import config
 from depends import AppState
 
-router = APIRouter()
+router = APIRouter(tags=['公众号接口'])
 
 get_timeout_reply = AppState('timeout_reply')
 get_user_map = AppState('user_map')
@@ -21,8 +21,16 @@ get_bot_manager = AppState('bot_manager')
 
 @router.get("/wechat")
 async def verify_wechat_server(signature: str, echostr: str, timestamp: str, nonce: str):
+    """
+    微信服务器验证接口
+    :param signature:
+    :param echostr:
+    :param timestamp:
+    :param nonce:
+    :return:
+    """
     try:
-        check_signature(TOKEN, signature, timestamp, nonce)
+        check_signature(config.TOKEN, signature, timestamp, nonce)
         return HTMLResponse(content=echostr)
     except InvalidSignatureException:
         return "Invalid request"
@@ -30,6 +38,12 @@ async def verify_wechat_server(signature: str, echostr: str, timestamp: str, non
 
 @router.get("/reply")
 async def get_pending_reply(msg_id, timeout_reply: chatgpt_api.TimeoutReply = Depends(get_timeout_reply)):
+    """
+    超时回复 查询接口
+    :param msg_id:
+    :param timeout_reply:
+    :return:
+    """
     ask_message, reply = timeout_reply.get_reply(msg_id)
     if ask_message is None:
         return HTMLResponse(
@@ -48,7 +62,7 @@ async def reply_wechat_message(request: Request,
     xml_data = data.decode("utf-8")
     nonce = request.query_params.get('nonce')
     timestamp = request.query_params.get('timestamp')
-    crypto = WeChatCrypto(TOKEN, EncodingAESKey, APP_ID)
+    crypto = WeChatCrypto(config.TOKEN, config.EncodingAESKey, config.APP_ID)
 
     try:
         msg = crypto.decrypt_message(

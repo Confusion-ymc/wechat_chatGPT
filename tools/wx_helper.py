@@ -59,10 +59,5 @@ wx_tools = WXHelper(
     app_token=config.app_token
 )
 
-# wx_tools = WXHelper(appid='wx79041d8625ec9aa8', secret='c0021e35348e6b177ecaccda8b816ed4', token='ymc4399')
-
 if __name__ == '__main__':
-    # auth_url = f'https://open.weixin.qq.com/connect/oauth2/authorize?appid={wx_tools.appid}&redirect_uri={settings.redirect_url}&response_type=code&scope=snsapi_userinfo#wechat_redirect'
-    # image_data = make_code(auth_url, 300, 300)  # 二维码大小
-    # image_data.save('123.png')
     asyncio.run(wx_tools.get_we_user_opendid('083UMqFa135S5D0wppJa1n5giw1UMqFL'))

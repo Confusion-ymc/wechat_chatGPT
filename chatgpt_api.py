@@ -12,7 +12,6 @@ from loguru import logger
 from revChatGPT.V3 import Chatbot
 
 import config
-from config import chatGPT_KEY
 
 
 class MyBot(Chatbot):
@@ -86,7 +85,7 @@ class BotManager:
         self.clear_bot()
         bot = self.bot_pool.get(user_id)
         if not bot:
-            bot = MyBot(api_key=chatGPT_KEY)
+            bot = MyBot(api_key=config.chatGPT_KEY)
             # 配置代理
             if config.PROXY:
                 bot.session = requests.Session()
@@ -224,7 +223,7 @@ class User:
 
 
 if __name__ == '__main__':
-    test_bot = Chatbot(api_key=chatGPT_KEY, proxy='socks5h://192.168.1.104:10801')
+    test_bot = Chatbot(api_key=config.chatGPT_KEY, proxy='socks5h://192.168.1.104:10801')
     test_bot.session = requests.Session()
     test_bot.session.proxies = {'http': config.PROXY, 'https': config.PROXY}
 
