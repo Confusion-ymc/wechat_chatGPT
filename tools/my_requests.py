@@ -20,9 +20,7 @@ async def aio_request(url, method='GET', **kwargs) -> dict:
     try:
         async with aiohttp.ClientSession(headers=base_headers, timeout=ClientTimeout(total=60)) as session:
             async with session.request(url=url, method=method, ssl=False, **kwargs) as r:
-                # async with session.request(method=method.upper(), url=url, ssl=False, **kwargs) as r:
-                content = await r.content.read()
-                json_body = json.loads(content.decode())
+                json_body = await r.json()
                 return json_body
     except Exception as e:
         raise Exception(f'请求失败 url: {url} :: {e}')

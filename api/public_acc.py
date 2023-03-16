@@ -1,4 +1,4 @@
-from fastapi import Request, APIRouter, Depends
+from fastapi import Request, APIRouter, Depends, Body
 import chatgpt_api
 
 from loguru import logger
@@ -11,6 +11,8 @@ from wechatpy import parse_message
 
 import config
 from depends import AppState
+from tools.my_requests import aio_request
+from tools.wx_helper import wx_tools
 
 router = APIRouter(tags=['公众号接口'])
 
@@ -30,7 +32,7 @@ async def verify_wechat_server(signature: str, echostr: str, timestamp: str, non
     :return:
     """
     try:
-        check_signature(config.TOKEN, signature, timestamp, nonce)
+        check_signature(config.pub_token, signature, timestamp, nonce)
         return HTMLResponse(content=echostr)
     except InvalidSignatureException:
         return "Invalid request"
@@ -62,7 +64,7 @@ async def reply_wechat_message(request: Request,
     xml_data = data.decode("utf-8")
     nonce = request.query_params.get('nonce')
     timestamp = request.query_params.get('timestamp')
-    crypto = WeChatCrypto(config.TOKEN, config.EncodingAESKey, config.APP_ID)
+    crypto = WeChatCrypto(config.pub_token, config.EncodingAESKey, config.pub_app_id)
 
     try:
         msg = crypto.decrypt_message(
@@ -95,3 +97,22 @@ async def reply_wechat_message(request: Request,
         nonce,
         timestamp
     ))
+
+
+@router.post('/set_menu')
+async def reply_wechat_message(request: Request, app_id: str, data: dict = Body(..., description='菜单参数')):
+    """
+    设置公众号菜单接口
+    data 参数参考 https://developers.weixin.qq.com/doc/offiaccount/Custom_Menus/Creating_Custom-Defined_Menu.html
+    :param request:
+    :param app_id:
+    :param data:
+    :return:
+    """
+    if app_id != config.pub_app_id:
+        return {'data': 'failed', 'success': False, 'message': 'wrong app_id'}
+    access_token = await wx_tools.get_admin_pub_access_token()
+    url = f'https://api.weixin.qq.com/cgi-bin/menu/create?access_token={access_token}'
+    json_res = await aio_request(url, method='POST', json=data)
+    logger.info(f'设置公众号菜单 [{json_res}]')
+    return json_res

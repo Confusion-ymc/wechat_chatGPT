@@ -30,16 +30,22 @@ pip3 install -r requirements.txt
 例如：
 
 ```
-TOKEN = "1232sa1d"  # 请填写你在微信公众平台设置的 Token
-EncodingAESKey = 'b1DRHn1B9ZU2K7lUO9DqkWLdi4jAzANnE69YPpc5'
-APP_ID = 'wx37b5de69340a4'
-chatGPT_KEY = "sk-Ol0g4yeT3BlbkFJpfXHBOv1dLLcXUArFLxK"
-PROXY = None  # "socks5h://127.0.0.1:10801" chatGPT 访问接口的代理
+# chatGPT apikey
+chatGPT_apikey = "sk-Ol0g4yBAohi51TdOmpfXHBOv1dLLcXUArFLxK"
+# chatGPT接口使用的代理
+PROXY = "socks5h://192.168.1.104:10801"
+# 公众号设置
+pub_app_id = 'wx37b939340a4'
+pub_app_secret = '0ec16ab7f35d0cff34524c91'
+
+# 公众号加密配置
+pub_token = "yasdasd9"  # 请填写你在微信公众平台设置的 Token
+EncodingAESKey = 'b1rngzANnE69YPpc5'
 
 # 小程序配置
-we_app_id = ''
-we_secret = ''
-app_token = ''
+we_app_id = 'wx65db5e0e17'
+we_secret = '723f69bedfe7f873c'
+app_token = ''  
 
 ```
 

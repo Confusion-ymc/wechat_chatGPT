@@ -1,33 +1,31 @@
 import asyncio
 import hashlib
+import time
 
 import config
 from tools.my_requests import aio_request
 
 
 class WXHelper:
-    def __init__(self, h5_app_id=None, h5_secret=None, we_app_id=None, we_secret=None, app_token=''):
-        self.h5_app_id = h5_app_id
-        self.h5_secret = h5_secret
+    def __init__(self, pub_app_id=None, pub_app_secret=None, we_app_id=None, we_secret=None, app_token=''):
+        self.pub_app_id = pub_app_id
+        self.pub_app_secret = pub_app_secret
         self.we_app_id = we_app_id
         self.we_secret = we_secret
         self.app_token = app_token
         self.access_token = {}
+        self._pub_admin_access_token = None
 
     async def get_user_access_token(self, code):
-        url = f'https://api.weixin.qq.com/sns/oauth2/access_token?appid={self.h5_app_id}&secret={self.h5_secret}&code={code}&grant_type=authorization_code'
+        url = f'https://api.weixin.qq.com/sns/oauth2/access_token?appid={self.pub_app_id}&secret={self.pub_app_secret}&code={code}&grant_type=authorization_code'
         res = await aio_request(url, method='POST')
         return res
 
     async def get_we_user_opendid(self, code):
-        url = f"https://api.weixin.qq.com/sns/jscode2session?appid={self.we_app_id}&secret={self.we_secret}&js_code={code}&grant_type=authorization_code"
-        res = await aio_request(url, method="POST")
-        return res['openid']
-
-    async def get_we_user_info(self, code):
         try:
-            openid = await self.get_we_user_opendid(code)
-            return openid
+            url = f"https://api.weixin.qq.com/sns/jscode2session?appid={self.we_app_id}&secret={self.we_secret}&js_code={code}&grant_type=authorization_code"
+            res = await aio_request(url, method="POST")
+            return res['openid']
         except Exception as e:
             raise Exception(f'获取微信用户信息失败 {e}')
 
@@ -52,8 +50,18 @@ class WXHelper:
         else:
             return False
 
+    async def get_admin_pub_access_token(self):
+        if not self._pub_admin_access_token or self._pub_admin_access_token['expires_in'] < time.time():
+            url = f'https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid={self.pub_app_id}&secret={self.pub_app_secret}'
+            json_res = await aio_request(url, method="GET")
+            json_res['expires_in'] += time.time()
+            self._pub_admin_access_token = json_res
+        return self._pub_admin_access_token['access_token']
+
 
 wx_tools = WXHelper(
+    pub_app_id=config.pub_app_id,
+    pub_app_secret=config.pub_app_secret,
     we_app_id=config.we_app_id,
     we_secret=config.we_secret,
     app_token=config.app_token
