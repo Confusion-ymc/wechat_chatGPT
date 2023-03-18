@@ -2,7 +2,7 @@ import asyncio
 import threading
 import time
 
-from fastapi import Request, APIRouter, Depends
+from fastapi import APIRouter, Depends, Body
 from starlette.websockets import WebSocket, WebSocketDisconnect
 
 import chatgpt_api
@@ -22,22 +22,24 @@ ws_user_manager = {}
 
 @router.post('/ask')
 async def ask_chatgpt(
-        request: Request,
+        user_id=Body(..., embed=True),
+        ask_message=Body(..., embed=True),
         timeout_reply: chatgpt_api.TimeoutReply = Depends(get_timeout_reply),
         user_map: dict = Depends(get_user_map),
         bot_manager: chatgpt_api.BotManager = Depends(get_bot_manager)
 ):
     """
     接口请求
-    :param request:
+    :param user_id:
+    :param ask_message:
     :param timeout_reply:
     :param user_map:
     :param bot_manager:
     :return:
     """
-    data = await request.json()
-    user_id = data.get('user_id')
-    ask_message = data.get('ask_message')
+    # data = await request.json()
+    # user_id, ask_message = recv_msg.user_id, recv_msg.ask_message
+    # ask_message = data.get('ask_message')
     logger.info(f'收到消息：[{user_id}] [{ask_message}]')
     assert user_id and ask_message
     create_time = str(time.time())
@@ -53,14 +55,14 @@ async def ask_chatgpt(
 
 
 @router.post('/login')
-async def app_login(request: Request):
+async def app_login(code=Body(..., embed=True)):
     """
     登录换取code
-    :param request:
+    :param code:
     :return:
     """
-    data = await request.json()
-    code = data.get('code')
+    # data = await request.json()
+    # code = data.get('code')
     open_id = await wx_tools.get_we_user_opendid(code)
     return {'data': open_id}
 
