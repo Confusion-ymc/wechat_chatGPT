@@ -75,13 +75,13 @@ class WsUser:
         self.ask_message = ''
         self.reply_queue = []
 
-    def ask(self, bot, ask_message):
+    def ask(self, ask_message):
         if self.pending or self.reply_queue:
             logger.info('已存在运行中的任务, 不创建任务')
             return False
         else:
             self.ask_message = ask_message
-            threading.Thread(target=self.stream_reply, args=(bot, ask_message)).start()
+            threading.Thread(target=self.stream_reply, args=(ask_message, )).start()
             return True
 
     async def send_reply(self, ws: WebSocket):
