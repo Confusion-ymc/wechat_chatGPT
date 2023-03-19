@@ -68,8 +68,9 @@ async def app_login(code=Body(..., embed=True)):
 
 
 class WsUser:
-    def __init__(self, user_id):
+    def __init__(self, user_id,  bot_manager):
         self.pending = False
+        self.bot_manager = bot_manager
         self.user_id = user_id
         self.ask_message = ''
         self.reply_queue = []
@@ -114,13 +115,18 @@ class WsUser:
                     self.reply_queue.insert(0, backup[-(1 + i)])
             raise e
 
-    def stream_reply(self, bot, ask_message):
+    def stream_reply(self, ask_message):
+        bot = self.bot_manager.get_bot(self.user_id)
         self.pending = True
         logger.info(f'[线程启动] [{self.user_id}] {ask_message}')
         error = ''
         try:
             for item in bot.ask_stream(ask_message):
                 self.reply_queue.append({'data': item, 'finish': False})
+        except chatgpt_api.ContextLengthError as e:
+            error = str(e)
+            self.bot_manager.clear_bot(self.user_id)
+            self.reply_queue.append({'data': '[抱歉，对话超过模型支持长度，已重置上下文]', 'finish': False})
         except Exception as e:
             error = str(e)
             self.reply_queue.append({'data': '[抱歉，连接超时，请重新尝试]', 'finish': False})
@@ -137,14 +143,13 @@ async def websocket_endpoint(user_id: str, websocket: WebSocket):
     logger.info(f'[WS连接成功] [{user_id}]')
     user = ws_user_manager.get(user_id)
     if not user:
-        user = WsUser(user_id)
+        user = WsUser(user_id, bot_manager)
         ws_user_manager[user_id] = user
-    bot = bot_manager.get_bot(user_id)
     try:
         asyncio.create_task(user.send_reply(websocket))
         while True:
             ask_message = await websocket.receive_text()
-            if not user.ask(bot, ask_message):
+            if not user.ask(ask_message):
                 await websocket.send_json({'data': '请等待上一条消息处理完毕后发送', 'finish': False})
                 await websocket.send_json({'data': '', 'finish': True})
             await user.send_reply(websocket)

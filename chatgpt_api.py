@@ -14,6 +14,10 @@ from revChatGPT.V3 import Chatbot
 import config
 
 
+class ContextLengthError(Exception):
+    pass
+
+
 class MyBot(Chatbot):
     def __init__(self, *args, **kwargs):
         super(MyBot, self).__init__(*args, **kwargs)
@@ -42,6 +46,8 @@ class MyBot(Chatbot):
             stream=True,
         )
         if response.status_code != 200:
+            if "context_length_exceeded" in response.text:
+                raise ContextLengthError(response.text)
             raise Exception(
                 f"Error: {response.status_code} {response.reason} {response.text}",
             )
@@ -94,7 +100,11 @@ class BotManager:
         self.bot_last_use_time[user_id] = datetime.datetime.now()
         return bot
 
-    def clear_bot(self):
+    def clear_bot(self, user_id=None):
+        if user_id:
+            del self.bot_last_use_time[user_id]
+            del self.bot_pool[user_id]
+            return
         copy_last_use_time = self.bot_last_use_time.copy()
         for user_id, use_time in copy_last_use_time.items():
             if (datetime.datetime.now() - use_time) > datetime.timedelta(hours=1):
