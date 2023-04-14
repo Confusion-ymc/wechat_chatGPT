@@ -1,4 +1,5 @@
 import asyncio
+import json
 import threading
 import time
 from typing import List
@@ -160,14 +161,18 @@ async def websocket_endpoint(user_id: str, websocket: WebSocket):
     try:
         asyncio.create_task(user.send_reply(websocket))
         while True:
-            json_message = await websocket.receive_json()
-            if json_message['op'] == 'ask':
-                ask = json_message['data']
-                if json_message['version'] in websocket.app.state.block_version:
-                    await websocket.send_json({'data': ask, 'finish': True})
-                    continue
-                if not user.ask(ask):
-                    await websocket.send_json({'data': '请等待上一条消息处理完毕后发送', 'finish': True})
+            ask = await websocket.receive_text()
+            try:
+                json_message = json.loads(ask)
+                if json_message['op'] == 'ask':
+                    ask = json_message['data']
+                    if json_message['version'] in websocket.app.state.block_version:
+                        await websocket.send_json({'data': ask, 'finish': True})
+                        continue
+            except:
+                pass
+            if not user.ask(ask):
+                await websocket.send_json({'data': '请等待上一条消息处理完毕后发送', 'finish': True})
             await user.send_reply(websocket)
     except WebSocketDisconnect:
         logger.warning(f'[WS断开连接] [{user_id}]')
