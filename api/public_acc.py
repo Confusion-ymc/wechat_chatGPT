@@ -1,5 +1,5 @@
 from fastapi import Request, APIRouter, Depends, Body
-import chatgpt_api
+from bot import chatgpt_api
 
 from loguru import logger
 from starlette.responses import HTMLResponse

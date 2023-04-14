@@ -1,12 +1,11 @@
 import datetime
-import json
 import threading
 
-import asyncio
 import time
 import uuid
 from typing import Dict, Optional
 
+import asyncio
 import requests
 from loguru import logger
 from revChatGPT.V3 import Chatbot
@@ -18,80 +17,16 @@ class ContextLengthError(Exception):
     pass
 
 
-class MyBot(Chatbot):
-    def __init__(self, *args, **kwargs):
-        super(MyBot, self).__init__(*args, **kwargs)
-
-    def ask_stream(self, prompt: str, role: str = "user", **kwargs) -> str:
-        """
-        Ask a question
-        """
-        api_key = kwargs.get("api_key")
-        self.__add_to_conversation(prompt, role)
-        # Get response
-        response = self.session.post(
-            "https://api.openai.com/v1/chat/completions",
-            headers={"Authorization": "Bearer " + (api_key or self.api_key)},
-            timeout=120,
-            json={
-                "model": self.engine,
-                "messages": self.conversation,
-                "stream": True,
-                # kwargs
-                "temperature": kwargs.get("temperature", 0.7),
-                "top_p": kwargs.get("top_p", 1),
-                "n": kwargs.get("n", 1),
-                "user": kwargs.get("user", "user"),
-            },
-            stream=True,
-        )
-        if response.status_code != 200:
-            if "context_length_exceeded" in response.text:
-                raise ContextLengthError(response.text)
-            raise Exception(
-                f"Error: {response.status_code} {response.reason} {response.text}",
-            )
-        response_role: Optional[str] = None
-        full_response: str = ""
-        for line in response.iter_lines():
-            if not line:
-                continue
-            # Remove "data: "
-            line = line.decode("utf-8")[6:]
-            if line == "[DONE]":
-                break
-            resp: dict = json.loads(line)
-            choices = resp.get("choices")
-            if not choices:
-                continue
-            delta = choices[0].get("delta")
-            if not delta:
-                continue
-            if "role" in delta:
-                response_role = delta["role"]
-            if "content" in delta:
-                content = delta["content"]
-                full_response += content
-                yield content
-        self.__add_to_conversation(full_response, response_role)
-
-    def __add_to_conversation(self, message: str, role: str):
-        """
-        Add a message to the conversation
-        """
-        self.conversation.append({"role": role, "content": message})
-
-
 class BotManager:
     def __init__(self):
-        self.bot_pool: Dict[str, MyBot] = {}
+        self.bot_pool: Dict[str, Chatbot] = {}
         self.bot_last_use_time = {}
 
-    def get_bot(self, user_id) -> MyBot:
+    def get_bot(self, user_id) -> Chatbot:
         self.clear_bot()
         bot = self.bot_pool.get(user_id)
         if not bot:
-            bot = MyBot(api_key=config.chatGPT_apikey)
+            bot = Chatbot(api_key=config.chatGPT_apikey)
             # 配置代理
             if config.PROXY:
                 bot.session = requests.Session()
@@ -117,7 +52,7 @@ class Conversation(threading.Thread):
         super(Conversation, self).__init__()
         self.daemon = True
         self.ask_message = ask_message
-        self.bot: MyBot = bot
+        self.bot: Chatbot = bot
         self.user_id = user_id
         self.reply = ''
         self.id = conversation_id
@@ -228,14 +163,5 @@ class User:
         self.task = conversation
         return self.task
 
-    def get_bot(self) -> MyBot:
+    def get_bot(self) -> Chatbot:
         return self.bot_manager.get_bot(self.id)
-
-
-if __name__ == '__main__':
-    test_bot = Chatbot(api_key=config.chatGPT_apikey, proxy='socks5h://192.168.1.104:10801')
-    test_bot.session = requests.Session()
-    test_bot.session.proxies = {'http': config.PROXY, 'https': config.PROXY}
-
-    data = test_bot.ask('你好')
-    print(data)

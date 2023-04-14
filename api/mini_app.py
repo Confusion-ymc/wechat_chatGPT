@@ -1,11 +1,13 @@
 import asyncio
 import threading
 import time
+from typing import List
 
 from fastapi import APIRouter, Depends, Body
+from starlette.requests import Request
 from starlette.websockets import WebSocket, WebSocketDisconnect
 
-import chatgpt_api
+from bot import chatgpt_api
 
 from loguru import logger
 from depends import AppState
@@ -67,8 +69,17 @@ async def app_login(code=Body(..., embed=True)):
     return {'data': open_id}
 
 
+@router.post('/release_version')
+async def set_version(version: List[str], request: Request):
+    """
+    设置线上版本
+    """
+    request.app.state.block_version = version
+    return {'data': request.app.state.block_version}
+
+
 class WsUser:
-    def __init__(self, user_id,  bot_manager):
+    def __init__(self, user_id, bot_manager):
         self.pending = False
         self.bot_manager = bot_manager
         self.user_id = user_id
@@ -81,12 +92,14 @@ class WsUser:
             return False
         else:
             self.ask_message = ask_message
-            threading.Thread(target=self.stream_reply, args=(ask_message, )).start()
+            self.pending = True
+            threading.Thread(target=self.stream_reply, args=(ask_message,)).start()
             return True
 
     async def send_reply(self, ws: WebSocket):
         backup = []
         if not self.pending and not self.reply_queue:
+            logger.error('回复线程退出')
             return
         try:
             start_send = False
@@ -117,20 +130,19 @@ class WsUser:
 
     def stream_reply(self, ask_message):
         bot = self.bot_manager.get_bot(self.user_id)
-        self.pending = True
         logger.info(f'[线程启动] [{self.user_id}] {ask_message}')
         error = ''
         try:
             for item in bot.ask_stream(ask_message):
                 self.reply_queue.append({'data': item, 'finish': False})
+            self.reply_queue.append({'data': '', 'finish': True})
         except chatgpt_api.ContextLengthError as e:
             error = str(e)
             self.bot_manager.clear_bot(self.user_id)
-            self.reply_queue.append({'data': '[抱歉，对话超过模型支持长度，已重置上下文]', 'finish': False})
+            self.reply_queue.append({'data': '[抱歉，对话超过模型支持长度，已重置上下文]', 'finish': True})
         except Exception as e:
             error = str(e)
-            self.reply_queue.append({'data': '[抱歉，连接超时，请重新尝试]', 'finish': False})
-        self.reply_queue.append({'data': '', 'finish': True})
+            self.reply_queue.append({'data': '[抱歉，连接超时，请重新尝试]', 'finish': True})
         logger.warning(f'[线程退出] [{self.user_id}] {ask_message} {error}')
         self.pending = False
 
@@ -148,10 +160,14 @@ async def websocket_endpoint(user_id: str, websocket: WebSocket):
     try:
         asyncio.create_task(user.send_reply(websocket))
         while True:
-            ask_message = await websocket.receive_text()
-            if not user.ask(ask_message):
-                await websocket.send_json({'data': '请等待上一条消息处理完毕后发送', 'finish': False})
-                await websocket.send_json({'data': '', 'finish': True})
+            json_message = await websocket.receive_json()
+            if json_message['op'] == 'ask':
+                ask = json_message['data']
+                if json_message['version'] in websocket.app.state.block_version:
+                    await websocket.send_json({'data': ask, 'finish': True})
+                    continue
+                if not user.ask(ask):
+                    await websocket.send_json({'data': '请等待上一条消息处理完毕后发送', 'finish': True})
             await user.send_reply(websocket)
     except WebSocketDisconnect:
         logger.warning(f'[WS断开连接] [{user_id}]')
