@@ -27,7 +27,6 @@ class MyBot(Chatbot):
         self.reply = None
 
     async def send_reply(self, websocket):
-        logger.info(f'[回复开始] {self.reply.ask_message}')
         send_index = 0
         while True:
             try:
@@ -36,11 +35,9 @@ class MyBot(Chatbot):
             except IndexError:
                 if self.reply.finish and send_index >= self.reply.text_len:
                     await websocket.send_json({'data': '', 'finish': True})
-                    logger.info(f'[回复退出] {self.reply.ask_message}')
                     self.reply = None
                     return
-                else:
-                    await asyncio.sleep(0.5)
+            await asyncio.sleep(0.05)  # 控制速度
 
     async def make_reply(self, ask_message):
         logger.info(f'[线程启动] {ask_message}')
