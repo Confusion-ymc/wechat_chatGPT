@@ -25,6 +25,7 @@ class MyBot(Chatbot):
     def __init__(self, *args, **kwargs):
         super(MyBot, self).__init__(*args, **kwargs)
         self.reply = None
+        self.conversation_id = kwargs.pop('conversation_id', None)
 
     async def send_reply(self, websocket):
         send_index = 0
@@ -40,7 +41,7 @@ class MyBot(Chatbot):
             await asyncio.sleep(0.05)  # 控制速度
 
     async def make_reply(self, ask_message):
-        logger.info(f'[线程启动] {ask_message}')
+        logger.info(f'[线程启动] [{self.conversation_id}] {ask_message}')
         error = ''
         self.reply = Reply(ask_message)
         try:
@@ -64,7 +65,7 @@ class BotManager:
         self.clear_bot()
         bot = self.bot_pool.get(conversation_id)
         if not bot:
-            bot = MyBot(api_key=config.CHATGPT_KEY, proxy=config.PROXY)
+            bot = MyBot(api_key=config.CHATGPT_KEY, proxy=config.PROXY, conversation_id=conversation_id)
             self.bot_pool[conversation_id] = bot
         self.bot_last_use_time[conversation_id] = datetime.datetime.now()
         return bot
