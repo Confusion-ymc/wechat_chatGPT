@@ -23,9 +23,9 @@ class Reply:
 
 class MyBot(Chatbot):
     def __init__(self, *args, **kwargs):
+        self.conversation_id = kwargs.pop('conversation_id', None)
         super(MyBot, self).__init__(*args, **kwargs)
         self.reply = None
-        self.conversation_id = kwargs.pop('conversation_id', None)
 
     async def send_reply(self, websocket):
         send_index = 0
