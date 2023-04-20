@@ -9,5 +9,3 @@ venv
 .idea
 build
 dist
-
-config.py
