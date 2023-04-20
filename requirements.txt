@@ -4,7 +4,7 @@ loguru==0.6.0
 starlette==0.25.0
 wechatpy==1.8.18
 asyncio==3.4.3
-revChatGPT==4.0.5
+revChatGPT==4.2.5
 cryptography==39.0.1
 aiohttp==3.8.4
 requests==2.28.2

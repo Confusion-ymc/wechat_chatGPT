@@ -30,22 +30,18 @@ pip3 install -r requirements.txt
 例如：
 
 ```
-# chatGPT apikey
-chatGPT_apikey = "sk-Ol0g4yBAohi51TdOmpfXHBOv1dLLcXUArFLxK"
-# chatGPT接口使用的代理
-PROXY = "socks5h://192.168.1.104:10801"
-# 公众号设置
-pub_app_id = 'wx37b939340a4'
-pub_app_secret = '0ec16ab7f35d0cff34524c91'
-
 # 公众号加密配置
-pub_token = "yasdasd9"  # 请填写你在微信公众平台设置的 Token
-EncodingAESKey = 'b1rngzANnE69YPpc5'
+EncodingAESKey = 'b1rng...'
+pub_app_id = 'wx37b...'
+pub_app_secret = '...'
+app_token = ''
 
 # 小程序配置
-we_app_id = 'wx65db5e0e17'
-we_secret = '723f69bedfe7f873c'
-app_token = ''  
+MINI_APP_ID = "wx65d3..."
+MINI_SECRET = "723f6"
+# chatGPT apikey
+CHATGPT_KEY = "sk-YrGqyWXf8..."
+PROXY = None  
 
 ```
 
@@ -62,4 +58,12 @@ python3 main.py
 2.运行
 ```
 docker-compopse up --build -d
+```
+
+## Fly.io 部署
+### 配置文件
+`fly.toml` 具体参考官方文档
+
+```commandline
+flyctl launch
 ```

@@ -1,5 +1,5 @@
 from fastapi import Request, APIRouter, Depends, Body
-from bot import chatgpt_api
+from bot import chatGPT_ACC
 
 from loguru import logger
 from starlette.responses import HTMLResponse
@@ -39,7 +39,7 @@ async def verify_wechat_server(signature: str, echostr: str, timestamp: str, non
 
 
 @router.get("/reply")
-async def get_pending_reply(msg_id, timeout_reply: chatgpt_api.TimeoutReply = Depends(get_timeout_reply)):
+async def get_pending_reply(msg_id, timeout_reply: chatGPT_ACC.TimeoutReply = Depends(get_timeout_reply)):
     """
     超时回复 查询接口
     :param msg_id:
@@ -56,9 +56,9 @@ async def get_pending_reply(msg_id, timeout_reply: chatgpt_api.TimeoutReply = De
 
 @router.post('/wechat')
 async def reply_wechat_message(request: Request,
-                               timeout_reply: chatgpt_api.TimeoutReply = Depends(get_timeout_reply),
+                               timeout_reply: chatGPT_ACC.TimeoutReply = Depends(get_timeout_reply),
                                user_map: dict = Depends(get_user_map),
-                               bot_manager: chatgpt_api.BotManager = Depends(get_bot_manager)
+                               bot_manager: chatGPT_ACC.BotManager = Depends(get_bot_manager)
                                ):
     data = await request.body()
     xml_data = data.decode("utf-8")
@@ -83,7 +83,7 @@ async def reply_wechat_message(request: Request,
         conversation_id = user_id + create_time
         user = user_map.get(user_id)
         if not user:
-            user = chatgpt_api.User(user_id, bot_manager, timeout_reply)
+            user = chatGPT_ACC.User(user_id, bot_manager, timeout_reply)
             user_map[user_id] = user
         reply_text = await user.get_reply(ask_message, conversation_id)
 

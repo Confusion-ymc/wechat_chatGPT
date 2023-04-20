@@ -26,7 +26,7 @@ class BotManager:
         self.clear_bot()
         bot = self.bot_pool.get(user_id)
         if not bot:
-            bot = Chatbot(api_key=config.chatGPT_apikey)
+            bot = Chatbot(api_key=config.CHATGPT_KEY)
             # 配置代理
             if config.PROXY:
                 bot.session = requests.Session()

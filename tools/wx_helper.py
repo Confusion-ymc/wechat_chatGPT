@@ -7,11 +7,11 @@ from tools.my_requests import aio_request
 
 
 class WXHelper:
-    def __init__(self, pub_app_id=None, pub_app_secret=None, we_app_id=None, we_secret=None, app_token=''):
+    def __init__(self, pub_app_id=None, pub_app_secret=None, mini_app_id=None, mini_secret=None, app_token=''):
         self.pub_app_id = pub_app_id
         self.pub_app_secret = pub_app_secret
-        self.we_app_id = we_app_id
-        self.we_secret = we_secret
+        self.mini_app_id = mini_app_id
+        self.mini_secret = mini_secret
         self.app_token = app_token
         self.access_token = {}
         self._pub_admin_access_token = None
@@ -21,9 +21,9 @@ class WXHelper:
         res = await aio_request(url, method='POST')
         return res
 
-    async def get_we_user_opendid(self, code):
+    async def get_mini_app_user_opendid(self, code):
         try:
-            url = f"https://api.weixin.qq.com/sns/jscode2session?appid={self.we_app_id}&secret={self.we_secret}&js_code={code}&grant_type=authorization_code"
+            url = f"https://api.weixin.qq.com/sns/jscode2session?appid={self.mini_app_id}&secret={self.mini_secret}&js_code={code}&grant_type=authorization_code"
             res = await aio_request(url, method="POST")
             return res['openid']
         except Exception as e:
@@ -62,10 +62,10 @@ class WXHelper:
 wx_tools = WXHelper(
     pub_app_id=config.pub_app_id,
     pub_app_secret=config.pub_app_secret,
-    we_app_id=config.we_app_id,
-    we_secret=config.we_secret,
+    mini_app_id=config.MINI_APP_ID,
+    mini_secret=config.MINI_SECRET,
     app_token=config.app_token
 )
 
 if __name__ == '__main__':
-    asyncio.run(wx_tools.get_we_user_opendid('083UMqFa135S5D0wppJa1n5giw1UMqFL'))
+    asyncio.run(wx_tools.get_mini_app_user_opendid('083UMqFa135S5D0wppJa1n5giw1UMqFL'))
