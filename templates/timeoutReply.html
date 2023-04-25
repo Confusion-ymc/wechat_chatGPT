@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Hello橙同学</title>
+
+    <style>
+   /**index.wxss**/
+page {
+  height: 100%;
+  background: rgb(244, 244, 244);
+}
+
+.container {
+  background-color: #ededed;
+  height: 100%;
+  display: flex;
+  justify-content: flex-end;
+  flex-direction: column;
+  margin: 15rpx;
+}
+
+.chat-list {
+  padding: 15px;
+  font-size: 35px;
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 10px;
+  flex-direction: column;
+}
+
+.text_content {
+  padding: 20px;
+  border-radius: 15px;
+  word-break: break-all;
+  margin: 10px;
+  display: flex;
+  flex-direction: column;
+}
+
+.container-left {
+  align-items: flex-start;
+}
+
+.text_content {
+  background: #ff8e1a;
+  color: white;
+  margin: 10px;
+}
+
+.blue_content {
+  background: #a3daff;
+  color: #272625;
+}
+
+    </style>
+  </head>
+  <body>
+    <div class="chat-list">
+      <!-- 聊天记录条目 -->
+      <div class="container-right">
+        <span class="name">You:</span>
+        <span class="text_content blue_content">{{ ask_message }}</span>
+      </div>
+      <div class="container-left">
+        <span class="name">chatGPT:</span>
+        <span class="text_content">{{ reply }}</span>
+      </div>
+      <!-- 其他聊天记录条目 -->
+    </div>
+  </body>
+</html>
+

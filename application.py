@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from api.mini_app import router as app_router
+from api.offiaccount_app import router as oa_router
 from bot.chatGPT import BotManager
 
 
@@ -10,6 +11,7 @@ def app_factory():
     app.state.bot_manager = bot_manager
 
     app.include_router(app_router)
+    app.include_router(oa_router)
     app.state.ban_version = []
     return app
 

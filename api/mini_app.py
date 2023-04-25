@@ -10,15 +10,13 @@ from loguru import logger
 
 from bot.chatGPT import BotManager
 from depends import AppState
-from tools.wx_helper import wx_tools
+from tools import wx_helper
 
 router = APIRouter(prefix='/app', tags=['小程序接口'])
 
 get_timeout_reply = AppState('timeout_reply')
 get_user_map = AppState('user_map')
 get_bot_manager = AppState('bot_manager')
-
-ws_user_manager = {}
 
 
 @router.post('/login')
@@ -28,7 +26,7 @@ async def app_login(code=Body(..., embed=True)):
     :param code:
     :return:
     """
-    open_id = await wx_tools.get_mini_app_user_opendid(code)
+    open_id = await wx_helper.get_mini_app_user_opendid(code)
     return {'data': open_id}
 
 
