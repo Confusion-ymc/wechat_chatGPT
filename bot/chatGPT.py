@@ -60,6 +60,7 @@ class MyBot(Chatbot):
     def __init__(self, *args, **kwargs):
         self.conversation_id = kwargs.pop('conversation_id', None)
         super(MyBot, self).__init__(*args, **kwargs)
+        self.timeout = 120
         self.reply = None
 
     async def send_reply(self, websocket):
