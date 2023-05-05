@@ -1,6 +1,6 @@
 import asyncio
 
-import config
+from configs import config
 from tools.my_requests import aio_request
 
 

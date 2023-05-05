@@ -15,7 +15,7 @@ from wechatpy.replies import create_reply
 from wechatpy.utils import check_signature
 from wechatpy import parse_message
 
-import config
+from configs import config
 from bot.chatGPT import TimeoutReply, timeout_reply_mgr, retry_request_count
 from depends import AppState
 

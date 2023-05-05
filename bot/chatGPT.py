@@ -9,7 +9,7 @@ from typing import Dict
 from loguru import logger
 from revChatGPT.V3 import Chatbot
 
-import config
+from configs import config
 
 
 class TimeoutReplyManger:

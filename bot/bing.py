@@ -2,7 +2,7 @@ import asyncio
 
 from EdgeGPT import Chatbot, ConversationStyle
 
-import config
+from configs import config
 
 
 async def main():
