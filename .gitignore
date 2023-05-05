@@ -10,4 +10,4 @@ venv
 build
 dist
 
-configs/config.py
+configs/local.py
